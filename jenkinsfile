@@ -5,7 +5,7 @@ pipeline {
         // Set your AWS credentials here or use Jenkins credentials store
         AWS_ACCESS_KEY = credentials('AWS_ACCESS_KEY') // Jenkins credential ID
         AWS_SECRET_KEY = credentials('AWS_SECRET_KEY') // Jenkins credential ID
-        AWS_REGION = 'us-east-1' // Change to your desired region
+        AWS_REGION = 'us-east-2' // Change to your desired region
     }
 
     stages {
@@ -26,14 +26,14 @@ pipeline {
         stage('Terraform Plan') {
             steps {
                 // Create a Terraform execution plan
-                sh "terraform plan -var=\"aws_region=${AWS_REGION}\" -var=\"key_name=${KEY_NAME}\""
+                sh "terraform plan -var=\"aws_region=${AWS_REGION}\""
             }
         }
 
         stage('Terraform Apply') {
             steps {
                 // Apply the Terraform configuration
-                sh "terraform apply -var=\"aws_region=${AWS_REGION}\" -var=\"key_name=${KEY_NAME}\" -auto-approve"
+                sh "terraform apply -var=\"aws_region=${AWS_REGION}\" -auto-approve"
             }
         }
         
