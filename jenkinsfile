@@ -1,0 +1,63 @@
+pipeline {
+    agent any
+
+    environment {
+        // Set your AWS credentials here or use Jenkins credentials store
+        AWS_ACCESS_KEY = credentials('AWS_ACCESS_KEY') // Jenkins credential ID
+        AWS_SECRET_KEY = credentials('AWS_SECRET_KEY') // Jenkins credential ID
+        AWS_REGION = 'us-east-1' // Change to your desired region
+        KEY_NAME = 'firstpair' // Replace with your actual key pair name
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // Checkout your Terraform code from your repository
+                  git branch: 'main', url: 'https://github.com/saurav270795/vpc.git'
+            }
+        }
+
+        stage('Terraform Init') {
+            steps {
+                // Initialize Terraform
+                sh 'terraform init'
+            }
+        }
+
+        stage('Terraform Plan') {
+            steps {
+                // Create a Terraform execution plan
+                sh "terraform plan -var=\"aws_region=${AWS_REGION}\" -var=\"key_name=${KEY_NAME}\""
+            }
+        }
+
+        stage('Terraform Apply') {
+            steps {
+                // Apply the Terraform configuration
+                sh "terraform apply -var=\"aws_region=${AWS_REGION}\" -var=\"key_name=${KEY_NAME}\" -auto-approve"
+            }
+        }
+        
+        stage('Output') {
+            steps {
+                // Optional: Output the created resources
+                sh 'terraform output'
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            // Optional: Notify or perform additional actions on success
+            echo 'Infrastructure created successfully!'
+        }
+        failure {
+            // Optional: Notify or perform additional actions on failure
+            echo 'Infrastructure creation failed!'
+        }
+    }
+}
+ 
