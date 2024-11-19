@@ -8,8 +8,15 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-east-2"
+  region = "var.aws_region"
 }
+
+variable "aws_region" {
+  description = "The AWS region to deploy resources in"
+  type        = string
+  default     = us-east-2
+}
+
 resource "aws_vpc" "my_vpc" {
   cidr_block       = "10.0.0.0/16"
   instance_tenancy = "default"
