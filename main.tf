@@ -8,107 +8,91 @@ terraform {
 }
 
 provider "aws" {
-  region = "var.aws_region"
-}
-
-variable "aws_region" {
-  description = "The AWS region to deploy resources in"
-  type        = string
-  default     = us-east-2
+  region = var.aws_region
 }
 
 resource "aws_vpc" "my_vpc" {
-  cidr_block       = "10.0.0.0/16"
+  cidr_block       = var.vpc_cidr
   instance_tenancy = "default"
   tags = {
-    Name = "first"
+    Name = var.vpc_name
   }
 }
 
-# Public Subnet
 resource "aws_subnet" "public_subnet" {
   vpc_id                  = aws_vpc.my_vpc.id
-  cidr_block              = "10.0.1.0/24"
+  cidr_block              = var.public_subnet_cidr
   map_public_ip_on_launch = true
-  availability_zone       = "us-east-2a"
+  availability_zone       = var.availability_zone
   tags = {
-    Name = "public-subnet"
+    Name = var.public_subnet_name
   }
 }
 
-# Private Subnet
 resource "aws_subnet" "private_subnet" {
   vpc_id            = aws_vpc.my_vpc.id
-  cidr_block        = "10.0.2.0/24"
-  availability_zone = "us-east-2a"
+  cidr_block        = var.private_subnet_cidr
+  availability_zone = var.availability_zone
   tags = {
-    Name = "private-subnet"
+    Name = var.private_subnet_name
   }
 }
 
-# Internet Gateway
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.my_vpc.id
   tags = {
-    Name = "my-igw"
+    Name = var.igw_name
   }
 }
 
-# Public Route Table
 resource "aws_route_table" "public_route_table" {
   vpc_id = aws_vpc.my_vpc.id
   tags = {
-    Name = "public-route-table"
+    Name = var.public_route_table_name
   }
 }
 
-# Public Route
 resource "aws_route" "public_route" {
   route_table_id         = aws_route_table.public_route_table.id
   destination_cidr_block = "0.0.0.0/0"
   gateway_id             = aws_internet_gateway.igw.id
 }
 
-# Associate Public Subnet with Public Route Table
 resource "aws_route_table_association" "public_subnet_association" {
   subnet_id      = aws_subnet.public_subnet.id
   route_table_id = aws_route_table.public_route_table.id
 }
 
-# NAT Gateway Elastic IP
 resource "aws_eip" "nat_eip" {
-  domain = "vpc"
+  vpc = true
   tags = {
-    Name = "nat-eip"
+    Name = var.nat_eip_name
   }
 }
 
-# NAT Gateway
 resource "aws_nat_gateway" "nat_gw" {
   allocation_id = aws_eip.nat_eip.id
   subnet_id     = aws_subnet.public_subnet.id
   tags = {
-    Name = "nat-gateway"
+    Name = var.nat_gateway_name
   }
 }
 
-# Private Route Table
 resource "aws_route_table" "private_route_table" {
   vpc_id = aws_vpc.my_vpc.id
   tags = {
-    Name = "private-route-table"
+    Name = var.private_route_table_name
   }
 }
 
-# Private Route for NAT Gateway
 resource "aws_route" "private_route" {
   route_table_id         = aws_route_table.private_route_table.id
   destination_cidr_block = "0.0.0.0/0"
   nat_gateway_id         = aws_nat_gateway.nat_gw.id
 }
 
-# Associate Private Subnet with Private Route Table
 resource "aws_route_table_association" "private_subnet_association" {
   subnet_id      = aws_subnet.private_subnet.id
   route_table_id = aws_route_table.private_route_table.id
 }
+
